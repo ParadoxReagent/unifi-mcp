@@ -1,3 +1,5 @@
+> **Read-only Network fork.** This fork keeps only the UniFi Network MCP server and makes it read-only in code: mutating tools are never registered and every non-read action is denied. Protect, Access, the API server, relay, worker and plugins were removed. See **[READ_ONLY_SETUP.md](READ_ONLY_SETUP.md)** to run it locally with Claude Code. The rest of this README describes the upstream project and may mention parts that are no longer here.
+
 # UniFi MCP
 
 <p align="center">

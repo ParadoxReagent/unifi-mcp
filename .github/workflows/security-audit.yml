@@ -35,26 +35,6 @@ jobs:
     - name: Audit
       run: uvx pip-audit==2.10.1 --strict --disable-pip -r "$RUNNER_TEMP/requirements.txt"
 
-  node-dependencies:
-    name: npm audit (worker)
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        directory: [apps/worker, apps/worker/worker]
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - uses: actions/setup-node@v7
-      with:
-        node-version: "22"
-
-    - name: Audit production dependencies
-      working-directory: ${{ matrix.directory }}
-      run: npm audit --omit=dev --audit-level=high
-
   bandit:
     name: Bandit (high severity)
     runs-on: ubuntu-latest

@@ -167,8 +167,9 @@ assert "initialize" in calls, calls
 async def probe(confirm: bool = False):
     return {{"success": True}}
 
-denied = asyncio.run(probe())
-assert denied["success"] is False and "disabled by policy" in denied["error"], "policy gate"
+# The read-only build drops every mutating tool instead of registering it.
+listed = {{tool.name for tool in asyncio.run(m.server.list_tools())}}
+assert "settings_file_probe" not in listed, "mutating tool registered"
 print("settings-file-probe-ok")
 """
 

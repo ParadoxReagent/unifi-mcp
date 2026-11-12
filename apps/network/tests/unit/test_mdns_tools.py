@@ -29,13 +29,6 @@ def manager(monkeypatch):
     return manager
 
 
-def test_tool_module_map_discovers_mdns_tools():
-    from unifi_network_mcp.categories import TOOL_MODULE_MAP
-
-    assert TOOL_MODULE_MAP["unifi_get_mdns_settings"] == "unifi_network_mcp.tools.system"
-    assert TOOL_MODULE_MAP["unifi_update_mdns_settings"] == "unifi_network_mcp.tools.system"
-
-
 @pytest.mark.asyncio
 async def test_get_and_real_preview_do_not_write(manager):
     from unifi_network_mcp.tools.system import get_mdns_settings, update_mdns_settings

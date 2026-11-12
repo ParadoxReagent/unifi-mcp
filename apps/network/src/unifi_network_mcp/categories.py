@@ -77,7 +77,22 @@ def _manifest_path() -> Path:
 def _build_tool_module_map() -> Dict[str, str]:
     """Build tool-to-module mapping for the network app."""
     manifest = _manifest_path()
-    return build_tool_module_map("unifi_network_mcp.tools", manifest_path=str(manifest))
+    module_map = build_tool_module_map("unifi_network_mcp.tools", manifest_path=str(manifest))
+    # Read-only build: only the tools in the manifest (all reads) are loadable.
+    # The tool modules still define mutating tools, but main.py never registers
+    # them, so the lazy loader must not advertise them either.
+    allowed = _manifest_tool_names(manifest)
+    return {name: module for name, module in module_map.items() if name in allowed}
+
+
+def _manifest_tool_names(manifest: Path) -> frozenset[str]:
+    import json
+
+    try:
+        with open(manifest, encoding="utf-8") as f:
+            return frozenset(tool["name"] for tool in json.load(f).get("tools", []))
+    except (OSError, ValueError):
+        return frozenset()
 
 
 # Build the tool map at module load time

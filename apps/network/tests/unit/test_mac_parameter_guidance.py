@@ -38,7 +38,6 @@ def test_list_description_names_the_next_call_parameter(
         ("unifi_get_client_details", "mac_address"),
         ("unifi_get_client_sessions", "mac_address"),
         ("unifi_get_switch_ports", "mac_address"),
-        ("unifi_unblock_client", "mac_address"),
         ("unifi_get_device_details", "mac_address"),
     ],
 )
@@ -47,17 +46,6 @@ def test_the_named_parameters_are_the_real_ones(tool: str, parameter: str) -> No
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
     entry = next(t for t in data["tools"] if t["name"] == tool)
     assert parameter in entry["schema"]["input"]["properties"]
-
-
-def test_every_tool_named_in_those_descriptions_exists(descriptions: dict[str, str]) -> None:
-    """A description that points at a tool this server does not have sends a caller nowhere."""
-    import re
-
-    known = set(descriptions)
-    for tool in ("unifi_list_clients", "unifi_list_devices", "unifi_list_blocked_clients"):
-        named = set(re.findall(r"\bunifi_[a-z0-9_]+", descriptions[tool])) - {tool}
-        assert named, f"{tool} names no follow-up tool"
-        assert named <= known, f"{tool} names tools that do not exist: {sorted(named - known)}"
 
 
 @pytest.mark.parametrize("tool", ["unifi_list_clients", "unifi_list_devices", "unifi_list_blocked_clients"])

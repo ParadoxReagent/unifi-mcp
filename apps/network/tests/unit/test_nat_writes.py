@@ -1,8 +1,6 @@
 """NAT MCP writes expose closed input schemas and delegate confirmation to Core."""
 
 import json
-import subprocess
-import sys
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -35,17 +33,6 @@ def test_mutation_metadata_and_nested_schema():
     nested = schema["properties"]["rule_data"]["properties"]["destination_filter"]["anyOf"][0]
     assert nested["additionalProperties"] is False
     assert list(Draft202012Validator(schema).iter_errors({"rule_data": {"destination_filter": {"adress": "x"}}}))
-
-
-def test_manifest_registry_keeps_nested_schema_in_fresh_process():
-    program = (
-        "import unifi_network_mcp.main; import unifi_network_mcp.tools.nat; "
-        "from unifi_network_mcp.runtime import get_tool_registry; "
-        "s=get_tool_registry()['unifi_create_nat_rule'].input_schema; "
-        "print(s['properties']['rule_data']['properties']['destination_filter']['anyOf'][0]['additionalProperties'])"
-    )
-    result = subprocess.run([sys.executable, "-c", program], capture_output=True, text=True, check=True)
-    assert result.stdout.strip() == "False"
 
 
 def test_nat_policy_gate_denies_each_write_action(monkeypatch):
