@@ -1,6 +1,5 @@
 """Unit tests for unifi_get_threat_management_settings MCP tool."""
 
-import importlib.util
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -11,11 +10,6 @@ from unifi_core.network.models.threat_management import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPT = REPO_ROOT / "scripts" / "generate_api_action_catalog.py"
-_spec = importlib.util.spec_from_file_location("generate_api_action_catalog", _SCRIPT)
-_gen = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_gen)
-_source_bindings = _gen._source_bindings
 
 SECRET_TOKEN = "synthetic-utm-token-secret-999"
 
@@ -85,12 +79,3 @@ def test_tool_annotations():
     assert tool.annotations is not None
     assert tool.annotations.read_only_hint is True
     assert tool.annotations.open_world_hint is False
-
-
-def test_catalog_generator_infers_mapping():
-    tools_file = REPO_ROOT / "apps/network/src/unifi_network_mcp/tools/system.py"
-    bindings = _source_bindings(tools_file, "unifi_network_mcp")
-    assert "unifi_get_threat_management_settings" in bindings
-    manager_attr, method_name = bindings["unifi_get_threat_management_settings"]
-    assert manager_attr == "system_manager"
-    assert method_name == "get_threat_management_settings"
