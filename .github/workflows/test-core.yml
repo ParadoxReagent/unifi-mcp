@@ -42,7 +42,9 @@ jobs:
 
     # Same install and test command as release-core.yml, so a PR runs the gate the tag will.
     - name: Install dependencies
-      run: uv sync --all-packages
+      # The core suite also covers the Protect and Access managers, whose SDKs are
+      # extras now that their apps no longer pull them into the workspace.
+      run: uv sync --all-packages --all-extras
 
     - name: Run tests
-      run: uv run --package unifi-core pytest packages/unifi-core/tests -n auto -v --tb=short
+      run: uv run --package unifi-core --all-extras pytest packages/unifi-core/tests -n auto -v --tb=short
