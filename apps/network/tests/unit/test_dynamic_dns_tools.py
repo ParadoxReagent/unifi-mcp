@@ -77,7 +77,7 @@ class TestListDynamicDns:
         assert result["entries"][0]["x_password"] == REDACTED
 
     @pytest.mark.asyncio
-    async def test_list_shows_secret_when_policy_off(self):
+    async def test_list_redacts_secret_even_when_tool_policy_says_off(self):
         mock_conn = MagicMock()
         mock_conn.site = "default"
 
@@ -88,11 +88,15 @@ class TestListDynamicDns:
             mock_mgr.list_dynamic_dns = AsyncMock(return_value=[SAMPLE_ENTRY_SECRET])
             mock_mgr._connection = mock_conn
 
+            from unifi_network_mcp.main import redact_tool_results
             from unifi_network_mcp.tools.dynamic_dns import list_dynamic_dns
 
-            result = await list_dynamic_dns()
+            # Apply the production backstop explicitly: whether this module was
+            # decorated by main.py depends on import order within the test run.
+            result = await redact_tool_results(list_dynamic_dns)()
 
-        assert result["entries"][0]["x_password"] == "super-secret-token"
+        # The result backstop in main.py redacts whatever the tool module decides.
+        assert result["entries"][0]["x_password"] == "***REDACTED***"
 
     @pytest.mark.asyncio
     async def test_list_exception(self):

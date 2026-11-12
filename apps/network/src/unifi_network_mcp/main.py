@@ -7,9 +7,12 @@ Responsibilities:
 """
 
 import asyncio
+import functools
+import inspect
 from contextlib import suppress
 
 from unifi_core.policy_gate import PolicyGateChecker
+from unifi_core.redaction import redact_sensitive_fields
 from unifi_mcp_shared.permissioned_tool import create_permissioned_tool
 from unifi_network_mcp.bootstrap import (
     UNIFI_TOOL_REGISTRATION_MODE,
@@ -72,13 +75,31 @@ class ReadOnlyPolicyGateChecker(PolicyGateChecker):
         return super().denial_message(category, action)
 
 
+def redact_tool_results(func):
+    """Wrap a tool so its result always passes through secret redaction.
+
+    Tool modules already redact where they know secrets live; this is the
+    backstop for any field they miss. It cannot be turned off.
+    """
+
+    @functools.wraps(func)
+    async def redacted(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if inspect.isawaitable(result):
+            result = await result
+        return redact_sensitive_fields(result, redact_sensitive=True)
+
+    return redacted
+
+
 def read_only_tool_decorator(permissioned_tool):
-    """Wrap *permissioned_tool* so mutating tools are dropped instead of registered."""
+    """Wrap *permissioned_tool* so mutating tools are dropped and every result is redacted."""
 
     def tool(*d_args, **d_kwargs):
         if is_mutating_tool(d_kwargs.get("permission_category"), d_kwargs.get("permission_action")):
             return lambda func: func
-        return permissioned_tool(*d_args, **d_kwargs)
+        register = permissioned_tool(*d_args, **d_kwargs)
+        return lambda func: register(redact_tool_results(func))
 
     return tool
 

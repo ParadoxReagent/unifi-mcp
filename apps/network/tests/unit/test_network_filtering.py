@@ -42,14 +42,14 @@ async def test_network_details_redacts_openvpn_private_keys(monkeypatch, redact,
         if summary:
             assert key not in result["details"]
         else:
-            assert result["details"][key] == ("***REDACTED***" if redact else raw[key])
+            assert result["details"][key] == "***REDACTED***"
         assert raw[key] == "synthetic-vpn-private-key"
     if not summary:
         assert result["details"]["x_ca_crt"] == "public"
 
 
 @pytest.mark.asyncio
-async def test_get_network_details_summary_false_redacts_by_default_and_uses_policy_opt_out(monkeypatch):
+async def test_get_network_details_summary_false_redacts_and_ignores_policy_opt_out(monkeypatch):
     raw = {"_id": "n2", "name": "IoT", "dhcpd_enabled": True, "secret": "x"}
     with patch("unifi_network_mcp.tools.network.network_manager") as mock_nm:
         mock_nm.get_network_details = AsyncMock(return_value=raw)
@@ -63,7 +63,7 @@ async def test_get_network_details_summary_false_redacts_by_default_and_uses_pol
 
     assert result["summary_mode"] is False
     assert result["details"]["secret"] == "***REDACTED***"
-    assert raw_result["details"]["secret"] == "x"
+    assert raw_result["details"]["secret"] == "***REDACTED***"
 
 
 @pytest.mark.asyncio

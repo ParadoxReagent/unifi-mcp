@@ -245,7 +245,7 @@ class TestSnmpTools:
         assert result["preview"]["proposed"]["community"] == REDACTED
 
     @pytest.mark.asyncio
-    async def test_get_snmp_settings_policy_disabled_returns_community(self, monkeypatch):
+    async def test_get_snmp_settings_policy_disabled_still_redacts_community(self, monkeypatch):
         from unifi_network_mcp.tools import system
 
         mock_mgr = MagicMock()
@@ -256,7 +256,7 @@ class TestSnmpTools:
 
         result = await system.get_snmp_settings()
 
-        assert result["snmp_settings"]["community"] == "public"
+        assert result["snmp_settings"]["community"] == REDACTED
 
     # Redaction-marker write-back (community="***REDACTED***") is rejected
     # centrally at the MCP dispatch boundary (StrictKwargFastMCP.call_tool),
@@ -308,13 +308,13 @@ class TestSnmpV3Tools:
         assert "v3-secret" not in repr(result)
 
     @pytest.mark.asyncio
-    async def test_get_policy_disabled_returns_raw_password(self, monkeypatch):
+    async def test_get_policy_disabled_still_redacts_password(self, monkeypatch):
         system, _ = self._manager(monkeypatch)
         monkeypatch.setenv("UNIFI_NETWORK_REDACT_SENSITIVE_FIELDS", "false")
 
         result = await system.get_snmp_settings()
 
-        assert result["snmp_settings"]["x_password"] == "v3-secret"
+        assert result["snmp_settings"]["x_password"] == REDACTED
 
     @pytest.mark.asyncio
     async def test_preview_shows_current_v3_state_and_redacts_both_passwords(self, monkeypatch):
@@ -329,13 +329,13 @@ class TestSnmpV3Tools:
         assert "new" not in repr(result["preview"]) and "v3-secret" not in repr(result)
 
     @pytest.mark.asyncio
-    async def test_preview_policy_disabled_shows_the_proposed_password(self, monkeypatch):
+    async def test_preview_policy_disabled_still_redacts_the_proposed_password(self, monkeypatch):
         system, _ = self._manager(monkeypatch)
         monkeypatch.setenv("UNIFI_NETWORK_REDACT_SENSITIVE_FIELDS", "false")
 
         result = await system.update_snmp_settings(x_password="new", confirm=False)
 
-        assert result["preview"]["proposed"]["x_password"] == "new"
+        assert result["preview"]["proposed"]["x_password"] == REDACTED
 
     @pytest.mark.asyncio
     async def test_confirm_sends_controller_keys_and_echoes_model_keys(self, monkeypatch):

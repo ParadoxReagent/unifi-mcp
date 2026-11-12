@@ -99,7 +99,7 @@ async def test_device_details_redacts_credentials_at_response_boundary(monkeypat
 
     assert result["success"] is True
     for key in keys:
-        expected = REDACTED if redact else secrets[key]
+        expected = REDACTED  # the opt-out variable is ignored in this build
         assert result["device"][key] == expected
         assert result["device"]["nested"][0][key] == expected
     assert result["device"]["x_ssh_hostkey_fingerprint"] == "public"
@@ -123,7 +123,7 @@ async def test_device_list_redacts_nested_raw_tables(monkeypatch, redact):
 
     assert result["success"] is True
     network = result["devices"][0]["network_table"][0]
-    assert network["x_ca_key"] == (REDACTED if redact else "synthetic-vpn-key")
+    assert network["x_ca_key"] == REDACTED
     assert network["x_ca_crt"] == "public"
     assert raw == original
 
@@ -264,7 +264,7 @@ async def test_device_projection_preserves_nested_response_policy(monkeypatch, r
         result = await list_devices(fields="mac,ports", include_details=True, summary=False)
     assert result["success"] is True
     assert set(result["devices"][0]) == {"mac", "ports"}
-    assert result["devices"][0]["ports"][0]["x_password"] == (REDACTED if redact else "synthetic-port-secret")
+    assert result["devices"][0]["ports"][0]["x_password"] == REDACTED
 
 
 PORT7_RAW = {

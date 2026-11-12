@@ -54,7 +54,7 @@ _OPENVPN_CLIENT = {
 
 
 @pytest.mark.asyncio
-async def test_list_vpn_clients_redacts_by_default_and_uses_policy_opt_out(monkeypatch) -> None:
+async def test_list_vpn_clients_redacts_and_ignores_policy_opt_out(monkeypatch) -> None:
     clients = [_WG_FILE_CLIENT, _WG_MANUAL_CLIENT, _OPENVPN_CLIENT]
     with patch("unifi_network_mcp.tools.vpn.vpn_manager") as mock_mgr:
         mock_mgr.get_vpn_clients = AsyncMock(return_value=clients)
@@ -85,11 +85,8 @@ async def test_list_vpn_clients_redacts_by_default_and_uses_policy_opt_out(monke
     assert ovpn["openvpn_configuration_status"] == "VALID"
     assert ovpn["openvpn_configuration_filename"] == "test.ovpn"
 
-    # Operator policy opt-out returns everything raw.
-    raw_wg_file, raw_wg_manual, raw_ovpn = raw["vpn_clients"]
-    assert "PrivateKey" in raw_wg_file["wireguard_client_configuration_file"]
-    assert raw_wg_manual["wireguard_client_private_key"].startswith("TEST_FAKE_PRIVATE_KEY")
-    assert "BEGIN OpenVPN Static key" in raw_ovpn["openvpn_configuration"]
+    # The operator opt-out variable is ignored in this build: still redacted.
+    assert raw == default
 
 
 @pytest.mark.asyncio
@@ -105,7 +102,7 @@ async def test_get_vpn_client_details_redacts_config_blob_by_default(monkeypatch
         raw = await get_vpn_client_details("wg-file")
 
     assert default["details"]["wireguard_client_configuration_file"] == REDACTED
-    assert "PrivateKey" in raw["details"]["wireguard_client_configuration_file"]
+    assert raw["details"]["wireguard_client_configuration_file"] == REDACTED
 
 
 # WireGuard server (real networkconf field names): discrete x_-prefixed key.
@@ -134,7 +131,7 @@ async def test_list_vpn_servers_redacts_private_key_keeps_public(monkeypatch) ->
     assert server["x_wireguard_private_key"] == REDACTED
     # The public key is not secret and must stay visible.
     assert server["wireguard_public_key"] != REDACTED
-    assert raw["vpn_servers"][0]["x_wireguard_private_key"].startswith("TEST_FAKE_SERVER_PRIVATE_KEY")
+    assert raw["vpn_servers"][0]["x_wireguard_private_key"] == REDACTED
 
 
 @pytest.mark.asyncio

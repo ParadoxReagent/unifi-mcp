@@ -343,10 +343,8 @@ async def test_list_vouchers_respects_redaction_policy(monkeypatch, redact):
 
     assert result["success"] is True
     voucher = result["vouchers"][0]
-    if redact:
-        assert voucher["secret"] == "***REDACTED***"
-    else:
-        assert voucher["secret"] == "top-secret-val"
+    # The opt-out variable is ignored in this build.
+    assert voucher["secret"] == "***REDACTED***"
 
 
 # ---------------------------------------------------------------------------

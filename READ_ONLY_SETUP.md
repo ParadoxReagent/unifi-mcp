@@ -4,7 +4,8 @@ This fork keeps only the UniFi Network MCP server and makes it read-only in code
 
 - Tools that create, update, delete, block, reboot or otherwise change the controller are **never registered**. They cannot be listed, discovered, or reached through `unifi_execute` / `unifi_batch`.
 - The policy gate denies every non-read action, and no `UNIFI_POLICY_*`, `UNIFI_READ_ONLY`, settings file or permission-mode value can turn writes back on.
-- `apps/network/tests/unit/test_read_only_build.py` checks both layers.
+- Secrets are always redacted. WiFi passphrases, private PSKs, VPN private/pre-shared keys and config files, RADIUS and SNMP secrets, and device SSH credentials come back as `***REDACTED***`. `UNIFI_*REDACT_SENSITIVE_FIELDS` is ignored, and every tool result also passes through a final redaction pass in `main.py`.
+- `apps/network/tests/unit/test_read_only_build.py` checks these guarantees.
 
 The Protect, Access, API and relay servers, the Cloudflare worker, and the Claude/Codex plugins (which install the published PyPI package rather than this code) have been removed.
 
