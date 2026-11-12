@@ -88,9 +88,12 @@ class TestListDynamicDns:
             mock_mgr.list_dynamic_dns = AsyncMock(return_value=[SAMPLE_ENTRY_SECRET])
             mock_mgr._connection = mock_conn
 
+            from unifi_network_mcp.main import redact_tool_results
             from unifi_network_mcp.tools.dynamic_dns import list_dynamic_dns
 
-            result = await list_dynamic_dns()
+            # Apply the production backstop explicitly: whether this module was
+            # decorated by main.py depends on import order within the test run.
+            result = await redact_tool_results(list_dynamic_dns)()
 
         # The result backstop in main.py redacts whatever the tool module decides.
         assert result["entries"][0]["x_password"] == "***REDACTED***"

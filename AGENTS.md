@@ -275,7 +275,7 @@ When a tool domain has list/create/update tools, define a shared pydantic model 
 A change is not done unless ALL pass:
 
 ```bash
-make pre-commit   # format + lint + sync-skills + test
+make pre-commit   # format + manifest + lint + test
 ```
 
 ### Tool Changes Checklist
