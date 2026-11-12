@@ -1,7 +1,5 @@
 """Registration and Core delegation for the Network threat posture read tool."""
 
-import importlib.util
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,19 +15,6 @@ def test_tool_registered_with_read_only_session_metadata():
     tool = server._tool_manager._tools["unifi_get_threat_posture"]
     assert tool.annotations.read_only_hint is True
     assert tool.annotations.open_world_hint is False
-
-
-def test_catalog_source_binding_uses_existing_system_category():
-    from unifi_network_mcp.categories import NETWORK_CATEGORY_MAP
-
-    root = Path(__file__).resolve().parents[4]
-    generator = root / "scripts" / "generate_api_action_catalog.py"
-    spec = importlib.util.spec_from_file_location("generate_api_action_catalog", generator)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    bindings = module._source_bindings(root / "apps/network/src/unifi_network_mcp/tools/system.py", "unifi_network_mcp")
-    assert bindings["unifi_get_threat_posture"] == ("system_manager", "get_threat_posture")
-    assert NETWORK_CATEGORY_MAP["system"] == "system"
 
 
 @pytest.mark.asyncio

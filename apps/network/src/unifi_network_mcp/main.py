@@ -40,18 +40,64 @@ from unifi_network_mcp.utils.diagnostics import diagnostics_enabled, wrap_tool
 
 _original_tool_decorator = getattr(server, "_original_tool", server.tool)
 
+# This fork is read-only by construction. Two independent layers enforce it,
+# and no environment variable, settings file or policy gate can lift either:
+#   1. Tools that declare a non-read permission_action are never registered,
+#      so they cannot be listed, discovered or dispatched (unifi_execute and
+#      unifi_batch only reach registered tools).
+#   2. The policy gate denies every non-read action, in case a mutating tool
+#      is ever registered some other way.
+READ_ONLY_DENIAL = (
+    "This UniFi Network MCP build is read-only: {action} on {category} is not available. "
+    "Make the change in the UniFi console instead."
+)
+
+
+def is_mutating_tool(permission_category: str | None, permission_action: str | None) -> bool:
+    """True for a tool that declares a policy-checked action other than read."""
+    return bool(permission_category and permission_action and permission_action.lower() != "read")
+
+
+class ReadOnlyPolicyGateChecker(PolicyGateChecker):
+    """Policy gate that allows reads only, whatever the UNIFI_POLICY_* or READ_ONLY variables say."""
+
+    def check(self, category: str, action: str) -> bool:
+        if not action or action.lower() != "read":
+            return False
+        return super().check(category, action)
+
+    def denial_message(self, category: str, action: str) -> str:
+        if not action or action.lower() != "read":
+            return READ_ONLY_DENIAL.format(action=action or "this action", category=category or "this resource")
+        return super().denial_message(category, action)
+
+
+def read_only_tool_decorator(permissioned_tool):
+    """Wrap *permissioned_tool* so mutating tools are dropped instead of registered."""
+
+    def tool(*d_args, **d_kwargs):
+        if is_mutating_tool(d_kwargs.get("permission_category"), d_kwargs.get("permission_action")):
+            return lambda func: func
+        return permissioned_tool(*d_args, **d_kwargs)
+
+    return tool
+
+
 # Domain tools wait for the controller connection, within a bound, before they
 # run. Meta-tools register with the plain decorator: discovery never contacts
 # the controller.
-server.tool = create_permissioned_tool(
-    original_tool_decorator=reconnecting_tool_decorator(_original_tool_decorator, connection_manager),
-    policy_gate_checker=PolicyGateChecker(server_prefix="network", category_map=NETWORK_CATEGORY_MAP),
-    server_prefix="network",
-    register_tool_fn=register_tool,
-    diagnostics_enabled_fn=diagnostics_enabled,
-    wrap_tool_fn=wrap_tool,
-    logger=logger,
+server.tool = read_only_tool_decorator(
+    create_permissioned_tool(
+        original_tool_decorator=reconnecting_tool_decorator(_original_tool_decorator, connection_manager),
+        policy_gate_checker=ReadOnlyPolicyGateChecker(server_prefix="network", category_map=NETWORK_CATEGORY_MAP),
+        server_prefix="network",
+        register_tool_fn=register_tool,
+        diagnostics_enabled_fn=diagnostics_enabled,
+        wrap_tool_fn=wrap_tool,
+        logger=logger,
+    )
 )
+logger.info("Read-only build: mutating tools are not registered and every non-read action is denied.")
 
 logger.info("Loaded configuration globally.")
 logger.info("Using global ConnectionManager instance.")

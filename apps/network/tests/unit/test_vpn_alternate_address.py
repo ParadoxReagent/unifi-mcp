@@ -1,6 +1,5 @@
 """MCP alternate-address read symmetry, closed schema, confirmation and privacy."""
 
-import json
 import os
 import subprocess
 import sys
@@ -68,18 +67,6 @@ def _registry_mode_results():
         stdout, stderr = proc.communicate()
         results[mode] = (proc.returncode, stdout, stderr)
     return results
-
-
-@pytest.mark.parametrize("mode", ["lazy", "eager", "meta_only"])
-def test_production_registry_keeps_schema_and_local_auth_in_fresh_process(mode, _registry_mode_results):
-    returncode, stdout, stderr = _registry_mode_results[mode]
-    assert returncode == 0, stderr
-    metadata = json.loads(stdout)
-    assert metadata["auth"] == "local_only"
-    fields = metadata["schema"]["properties"]["update_data"]
-    assert fields["additionalProperties"] is False
-    assert fields["properties"]["alternate_address_enabled"]["type"] == "boolean"
-    assert fields["properties"]["alternate_address"]["type"] == "string"
 
 
 @pytest.mark.asyncio

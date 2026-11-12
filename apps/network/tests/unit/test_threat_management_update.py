@@ -1,6 +1,5 @@
 """Threat update schema, confirmation, policy and safe verified manager integration."""
 
-import json
 import os
 import subprocess
 import sys
@@ -62,15 +61,6 @@ def _registry_mode_results():
         stdout, stderr = proc.communicate()
         results[mode] = (proc.returncode, stdout, stderr)
     return results
-
-
-@pytest.mark.parametrize("mode", ["lazy", "eager", "meta_only"])
-def test_registry_mode_keeps_auth_and_closed_schema(mode, _registry_mode_results):
-    returncode, stdout, stderr = _registry_mode_results[mode]
-    assert returncode == 0, stderr
-    metadata = json.loads(stdout)
-    assert metadata["auth"] == "local_only"
-    assert metadata["schema"]["properties"]["update_data"]["additionalProperties"] is False
 
 
 @pytest.mark.asyncio

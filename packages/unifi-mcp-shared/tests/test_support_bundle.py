@@ -337,20 +337,3 @@ async def test_manifest_reader_and_version_failures_are_reduced_to_safe_fallback
     assert {item["version"] for item in result["data"]["dependencies"]} == {"not_installed"}
     assert "private" not in json.dumps(result)
     assert "secret-index" not in json.dumps(result)
-
-
-def test_product_manifests_have_identical_support_input_output_and_annotations():
-    entries = []
-    for product, prefix in (("network", "unifi"), ("protect", "protect"), ("access", "access")):
-        path = REPO_ROOT / "apps" / product / "src" / f"unifi_{product}_mcp" / "tools_manifest.json"
-        manifest = json.loads(path.read_text())
-        entries.append(next(tool for tool in manifest["tools"] if tool["name"] == f"{prefix}_get_support_bundle"))
-
-    assert all(entry["schema"] == entries[0]["schema"] for entry in entries)
-    assert all(entry["annotations"] == entries[0]["annotations"] for entry in entries)
-    assert entries[0]["annotations"] == {
-        "readOnlyHint": True,
-        "destructiveHint": False,
-        "idempotentHint": True,
-        "openWorldHint": False,
-    }

@@ -176,6 +176,11 @@ def _generate_manifest(
         logger=logger,
     )
 
+    # Only map tools that registered. A tool whose decorator declined to register
+    # it (the read-only Network build drops every mutating tool) is not loadable.
+    registered = {tool["name"] for tool in tools}
+    module_map = {name: module for name, module in module_map.items() if name in registered}
+
     manifest = {
         "tools": tools,
         "module_map": module_map,

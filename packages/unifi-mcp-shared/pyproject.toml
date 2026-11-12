@@ -34,6 +34,8 @@ otel = [
 
 [dependency-groups]
 dev = [
+    # test_sdk_v2_compatibility drives the server over HTTP with httpx.
+    "httpx>=0.28.1",
     "pytest>=9.0.3",
     "pytest-asyncio>=0.21.0",
     "unifi-mcp-shared[otel]",

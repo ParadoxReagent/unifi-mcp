@@ -1,1 +1,0 @@
-"""UniFi Protect MCP Server."""
