@@ -29,7 +29,7 @@ from unifi_core.auth import UniFiAuth
 from unifi_core.tls import server_ssl_setting
 from unifi_mcp_shared.bootstrap import resolve_env
 from unifi_mcp_shared.metadata import PROJECT_WEBSITE_URL, configure_mcp_server_metadata
-from unifi_mcp_shared.response_policy import resolve_mcp_content_mode, should_redact_response_sensitive_fields
+from unifi_mcp_shared.response_policy import resolve_mcp_content_mode
 from unifi_mcp_shared.server import UniFiMCPServer, resolve_allowed_hosts
 from unifi_mcp_shared.support_bundle import (
     SupportBundleService,
@@ -338,7 +338,7 @@ def get_support_bundle_service() -> SupportBundleService:
         content_mode=resolve_mcp_content_mode("network", config=cfg),
         transports=configured_transports(cfg.server),
         diagnostics_enabled=str(cfg.server.diagnostics.get("enabled", False)).lower() in {"true", "1", "yes"},
-        response_redaction_enabled=should_redact_response_sensitive_fields("network", cfg),
+        response_redaction_enabled=True,
         manifest_reader=fixed_manifest_reader(_TOOLS_MANIFEST_PATH),
         enabled_categories=configured_filter(cfg.server.get("enabled_categories")),
         enabled_tools=configured_filter(cfg.server.get("enabled_tools")),
@@ -386,13 +386,13 @@ support_bundle_service = get_support_bundle_service()
 
 
 def should_redact_sensitive_fields() -> bool:
-    """Whether Network MCP responses should redact sensitive fields.
+    """Whether Network MCP responses should redact sensitive fields: always.
 
-    Policy-resolved per call (env → config) so the surface-specific and global
-    ``UNIFI_*REDACT_SENSITIVE_FIELDS`` overrides both take effect. Binds the
-    ``"network"`` prefix + config in one place for the tool modules.
+    This build never returns secrets (WiFi passphrases, VPN keys, RADIUS and
+    SNMP secrets, device SSH credentials, ...). ``UNIFI_*REDACT_SENSITIVE_FIELDS``
+    and ``policy.response.redact_sensitive_fields`` are ignored.
     """
-    return should_redact_response_sensitive_fields("network", config)
+    return True
 
 
 logger.debug("runtime.py: shared singletons initialised")

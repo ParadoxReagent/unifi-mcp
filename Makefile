@@ -1,4 +1,4 @@
-.PHONY: help sync test core-test shared-test network-test lint format format-check manifest run \
+.PHONY: help sync test core-test shared-test network-test lint format format-check manifest run pre-commit \
        docker-build docker-up docker-down docker-logs
 
 help:
@@ -10,6 +10,7 @@ help:
 	@echo "  make lint           Lint the workspace"
 	@echo "  make format         Format the workspace"
 	@echo "  make manifest       Regenerate the Network tool manifest"
+	@echo "  make pre-commit     Format + manifest + lint + test"
 	@echo "  make docker-build   Build the Network Docker image"
 
 sync:
@@ -40,6 +41,12 @@ format-check:
 
 manifest:
 	$(MAKE) -C apps/network manifest
+
+pre-commit:
+	$(MAKE) format
+	$(MAKE) manifest
+	$(MAKE) lint
+	$(MAKE) test
 
 docker-build:
 	docker compose -f docker/docker-compose.yml build

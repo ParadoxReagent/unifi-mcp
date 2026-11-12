@@ -77,7 +77,7 @@ class TestListDynamicDns:
         assert result["entries"][0]["x_password"] == REDACTED
 
     @pytest.mark.asyncio
-    async def test_list_shows_secret_when_policy_off(self):
+    async def test_list_redacts_secret_even_when_tool_policy_says_off(self):
         mock_conn = MagicMock()
         mock_conn.site = "default"
 
@@ -92,7 +92,8 @@ class TestListDynamicDns:
 
             result = await list_dynamic_dns()
 
-        assert result["entries"][0]["x_password"] == "super-secret-token"
+        # The result backstop in main.py redacts whatever the tool module decides.
+        assert result["entries"][0]["x_password"] == "***REDACTED***"
 
     @pytest.mark.asyncio
     async def test_list_exception(self):

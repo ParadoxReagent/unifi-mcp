@@ -232,7 +232,7 @@ class TestListFirewallPolicies:
 
 class TestFirewallToolRedaction:
     @pytest.mark.asyncio
-    async def test_policy_details_redacts_by_default_and_uses_policy_opt_out(self, monkeypatch):
+    async def test_policy_details_redacts_and_ignores_policy_opt_out(self, monkeypatch):
         policy_raw = {
             **SAMPLE_ZONE_POLICY_RAW,
             "source": {**SAMPLE_ZONE_POLICY_RAW["source"], "auth_key": "secret"},
@@ -249,7 +249,7 @@ class TestFirewallToolRedaction:
             raw = await get_firewall_policy_details("pol_zone_001")
 
         assert default["details"]["source"]["auth_key"] == REDACTED
-        assert raw["details"]["source"]["auth_key"] == "secret"
+        assert raw["details"]["source"]["auth_key"] == REDACTED
 
     @pytest.mark.asyncio
     async def test_update_policy_preview_redacts_current_and_proposed_nested_secret(self):

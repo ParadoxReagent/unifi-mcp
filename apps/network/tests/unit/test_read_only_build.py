@@ -111,3 +111,40 @@ def test_eager_registration_exposes_no_mutating_tool(tmp_path):
     )
     assert result.returncode == 0, result.stderr[-4000:]
     assert "read-only-eager-ok" in result.stdout
+
+
+@pytest.mark.parametrize("value", ["false", "0", "no", "off"])
+def test_redaction_cannot_be_turned_off(monkeypatch, value):
+    from unifi_network_mcp.runtime import should_redact_sensitive_fields
+
+    monkeypatch.setenv("UNIFI_REDACT_SENSITIVE_FIELDS", value)
+    monkeypatch.setenv("UNIFI_NETWORK_REDACT_SENSITIVE_FIELDS", value)
+    assert should_redact_sensitive_fields() is True
+
+
+@pytest.mark.asyncio
+async def test_every_registered_tool_result_is_redacted():
+    import inspect
+
+    from unifi_network_mcp.main import read_only_tool_decorator
+
+    registered = {}
+
+    def fake_permissioned_tool(*args, **kwargs):
+        def register(func):
+            registered[kwargs["name"]] = func
+            return func
+
+        return register
+
+    tool = read_only_tool_decorator(fake_permissioned_tool)
+
+    @tool(name="unifi_list_wlans_probe", annotations={"readOnlyHint": True})
+    async def list_wlans(site: str = "default"):
+        return {"success": True, "data": [{"name": "Home", "x_passphrase": "hunter2", "nested": {"psk": "abc"}}]}
+
+    wrapped = registered["unifi_list_wlans_probe"]
+    assert list(inspect.signature(wrapped).parameters) == ["site"]
+    result = await wrapped()
+    assert "hunter2" not in str(result) and "abc" not in str(result)
+    assert result["data"][0]["name"] == "Home"
